@@ -18,6 +18,7 @@ const (
 // Global flag variables
 var (
 	NetworkFlag string
+	ProfileFlag bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -54,5 +55,13 @@ func init() {
 		"network",
 		string(Mainnet),
 		"Stellar network to use (testnet, mainnet, futurenet)",
+	)
+
+	// Add the --profile flag to the root command
+	rootCmd.PersistentFlags().BoolVar(
+		&ProfileFlag,
+		"profile",
+		false,
+		"Enable CPU/Memory profiling and generate a flamegraph SVG",
 	)
 }
