@@ -61,7 +61,7 @@ export class FallbackRPCClient {
                 console.log(`🔄 Attempting RPC request to: ${endpoint.url}`);
 
                 const client = this.clients.get(endpoint.url)!;
-                const response = await client.post(path, data);
+                const response = await this.executeWithRetry(client, path, data);
 
                 // Success! Mark endpoint as healthy and reset to primary
                 this.markSuccess(endpoint);
@@ -96,6 +96,31 @@ export class FallbackRPCClient {
         const duration = Date.now() - startTime;
         console.error(`❌ All RPC endpoints failed after ${duration}ms`);
         throw new Error(`All RPC endpoints failed: ${lastError?.message}`);
+    }
+
+    /**
+     * Execute request with local retries and exponential backoff
+     */
+    private async executeWithRetry(client: AxiosInstance, path: string, data: any): Promise<any> {
+        let lastError: any;
+
+        for (let attempt = 0; attempt < this.config.retries; attempt++) {
+            try {
+                return await client.post(path, data);
+            } catch (error) {
+                lastError = error;
+
+                if (attempt < this.config.retries - 1 && this.isRetryableError(error)) {
+                    const delay = this.config.retryDelay * Math.pow(2, attempt);
+                    console.log(`   Retrying in ${delay}ms... (Attempt ${attempt + 1}/${this.config.retries})`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                } else {
+                    throw error;
+                }
+            }
+        }
+
+        throw lastError;
     }
 
     /**
@@ -165,12 +190,6 @@ export class FallbackRPCClient {
                 axiosError.code === 'ENOTFOUND' ||
                 axiosError.code === 'ETIMEDOUT' ||
                 axiosError.code === 'ECONNRESET') {
-                return true;
-            }
-
-            // Timeout errors - BUG: Initially forgot this!
-            // Will fix in commit 7
-            if (axiosError.code === 'ECONNABORTED') {
                 return true;
             }
 
