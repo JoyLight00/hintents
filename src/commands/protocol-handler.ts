@@ -13,6 +13,7 @@ dotenv.config();
  */
 export function registerProtocolCommands(program: Command): void {
     // 1. Internal Protocol Handler (hidden from standard help via description)
+    // TODO: Implement a lock mechanism if multiple instances are launched simultaneously
     program
         .command('protocol-handler <uri>')
         .description('Internal: Handle ERST protocol URI (invoked by OS)')
