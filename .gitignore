@@ -38,6 +38,10 @@ create_phase9.py
 .idea/
 .vscode/
 
+ishus.py
+
+node_modules
+out
 # --- Documentation (User specific settings) ---
 # /external/
 # /*.md
